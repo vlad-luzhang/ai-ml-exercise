@@ -53,6 +53,7 @@ Each note is rated on:
 Scores go from 1 (bad) to 5 (excellent), with short explanations.
 
 ### Why these 3 dimensions?
+
 These were chosen to align with what matters most in clinical documentation: readability for clinicians (Clarity), safety and truthfulness for patient care (Clinical Accuracy), and trust-building in therapeutic communication (Tone & Professionalism).
 ---
 
@@ -67,7 +68,7 @@ Run:
 pytest tests/
 ```
 
-Covers parsing, prompt logic, and OpenAI call (mocked).
+Covers parsing, (TODO: prompt logic, and OpenAI call (mocked) and others)
 
 ---
 
@@ -144,6 +145,7 @@ Tone & Professionalism: 5/5 – The note maintains a compassionate, respectful, 
 ```
 ## Still on the Roadmap
 
+- Modularization, more unit tests, getting ready for deployment
 - Add hallucination checks
 - Visualize outliers
 - Try human vs. model evaluations
