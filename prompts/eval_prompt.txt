@@ -1,0 +1,13 @@
+You’re reviewing a clinical session note to help assess its quality. Please rate the note based on the following three areas, using a score from 1 (poor) to 5 (excellent), and include a short explanation for each rating:
+
+Clarity & Structure – Is the note well-organized and easy to understand?
+
+Clinical Accuracy & Appropriateness – Does it accurately reflect what happened in the session, without adding or missing key details?
+
+Tone & Professionalism – Does it maintain a compassionate and professional tone that's appropriate for a clinical setting?
+
+Please respond using this format:
+
+Clarity & Structure: <score>/5 – <brief explanation>  
+Clinical Accuracy & Appropriateness: <score>/5 – <brief explanation>  
+Tone & Professionalism: <score>/5 – <brief explanation>  
