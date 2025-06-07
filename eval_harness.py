@@ -1,7 +1,7 @@
 import os
 import argparse
 import pandas as pd
-from openai import OpenAI
+from openai import OpenAI, OpenAIError
 from dotenv import load_dotenv
 from tqdm import tqdm
 
@@ -61,15 +61,18 @@ def build_full_prompt(base_prompt: str, transcript: str, note: str) -> str:
 
 def query_openai(prompt: str, model: str, temperature: float = DEFAULT_TEMPERATURE) -> str:
     """Submit prompt to OpenAI's chat completions API and return the response content."""
-    response = client.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "system", "content": "You are a clinical documentation evaluator."},
-            {"role": "user", "content": prompt},
-        ],
-        temperature=temperature,
-    )
-    return response.choices[0].message.content
+    try:
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": "You are a clinical documentation evaluator."},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=temperature,
+        )
+        return response.choices[0].message.content
+    except OpenAIError as e:
+        raise RuntimeError(f"OpenAI API call failed: {e}")
 
 
 # ==== Score Parsing ====
@@ -105,16 +108,17 @@ def evaluate_all(args) -> None:
     base_prompt = load_prompt_template(PROMPT_TEMPLATE_PATH)
     results = []
 
-    # Choose file pairs
-    if args.pair:
-        pairs = [tuple(args.pair)]
-    else:
-        pairs = DEFAULT_DATA_PAIRS
+    # Use custom or default file pairs
+    pairs = [tuple(args.pair)] if args.pair else DEFAULT_DATA_PAIRS
 
     for transcript_path, note_path in tqdm(pairs, desc="Evaluating notes"):
-        with open(transcript_path, "r", encoding="utf-8") as f1, open(note_path, "r", encoding="utf-8") as f2:
-            transcript = f1.read()
-            note = f2.read()
+        try:
+            with open(transcript_path, "r", encoding="utf-8") as f1, open(note_path, "r", encoding="utf-8") as f2:
+                transcript = f1.read()
+                note = f2.read()
+        except FileNotFoundError as e:
+            print(f"File not found: {e}")
+            continue
 
         prompt = build_full_prompt(base_prompt, transcript, note)
 
@@ -125,15 +129,20 @@ def evaluate_all(args) -> None:
 
         try:
             response = query_openai(prompt, model=args.model)
-        except Exception as e:
-            print(f"OpenAI API error: {e}")
+        except RuntimeError as e:
+            print(f"Skipping {note_path} due to API error:\n{e}")
             continue
 
         scores = parse_scores(response)
 
         if any(score is None for score in scores.values()):
-            print("Failed to parse scores — raw response:")
-            print(response)
+            print(f"Incomplete scores for {note_path}. Raw response:\n{response}")
+            continue
+
+        for k, v in scores.items():
+            if not (1 <= v <= 5):
+                print(f"Invalid score: {k} = {v}. Skipping.")
+                continue
 
         scores.update({
             "transcript_file": os.path.basename(transcript_path),
@@ -146,7 +155,7 @@ def evaluate_all(args) -> None:
         results.append(scores)
 
     if not results:
-        print("No results to write.")
+        print("No valid results to write.")
         return
 
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
