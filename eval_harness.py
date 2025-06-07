@@ -1,4 +1,5 @@
 import os
+import re
 import argparse
 import pandas as pd
 from openai import OpenAI, OpenAIError
@@ -79,25 +80,23 @@ def query_openai(prompt: str, model: str, temperature: float = DEFAULT_TEMPERATU
 
 def parse_scores(response: str) -> dict:
     """
-    Parse GPT response to extract 3 evaluation scores from fixed format.
-    Expected format (one per line):
-        Clarity & Structure: <score>/5 – <reason>
-        Clinical Accuracy & Appropriateness: <score>/5 – <reason>
-        Tone & Professionalism: <score>/5 – <reason>
+    Parse GPT response to extract scores, supporting both line-by-line and inline formats.
     """
-    scores = {
-        "clarity_score": None,
-        "accuracy_score": None,
-        "tone_score": None,
+    pattern_map = {
+        "clarity_score": r"Clarity\s*&\s*Structure:\s*(\d)/5",
+        "accuracy_score": r"Clinical\s+Accuracy\s*&\s*Appropriateness:\s*(\d)/5",
+        "tone_score": r"Tone\s*&\s*Professionalism:\s*(\d)/5",
     }
 
-    for line in response.strip().splitlines():
-        if "Clarity" in line:
-            scores["clarity_score"] = int(line.split(":")[1].split("/")[0].strip())
-        elif "Accuracy" in line or "Appropriateness" in line:
-            scores["accuracy_score"] = int(line.split(":")[1].split("/")[0].strip())
-        elif "Tone" in line:
-            scores["tone_score"] = int(line.split(":")[1].split("/")[0].strip())
+    scores = {"clarity_score": None, "accuracy_score": None, "tone_score": None}
+
+    for key, pattern in pattern_map.items():
+        match = re.search(pattern, response, re.IGNORECASE)
+        if match:
+            try:
+                scores[key] = int(match.group(1))
+            except ValueError:
+                print(f"Could not parse score for {key}")
 
     return scores
 

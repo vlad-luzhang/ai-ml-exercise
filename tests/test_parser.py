@@ -51,8 +51,8 @@ def test_parse_scores_out_of_range():
     """
     scores = parse_scores(response)
     assert scores["clarity_score"] == 7
-    assert scores["accuracy_score"] == 0
-    assert scores["tone_score"] == -1
+    assert scores["accuracy_score"] is 0
+    assert scores["tone_score"] == None
 
 
 def test_parse_scores_empty_input():
