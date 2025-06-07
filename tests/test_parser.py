@@ -19,6 +19,15 @@ def test_parse_scores_valid_response():
     assert scores["accuracy_score"] == 5
     assert scores["tone_score"] == 5
 
+def test_parse_scores_valid_response_inline_format():
+    response = """
+    Clarity & Structure: 4/5 – Well-organized and clear. Clinical Accuracy & Appropriateness: 5/5 – Reflects session faithfully.
+    Tone & Professionalism: 5/5 – Professional and empathetic tone.
+    """
+    scores = parse_scores(response)
+    assert scores["clarity_score"] == 4
+    assert scores["accuracy_score"] == 5
+    assert scores["tone_score"] == 5
 
 def test_parse_scores_missing_accuracy():
     response = """
